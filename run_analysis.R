@@ -11,7 +11,7 @@ run_analysis <- function() {
         if (!file.exists("./Dataset.zip")) {
                 
                 # Download file from internet
-                fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip "
+                fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
                 dest <- "./Dataset.zip"
                 download.file(fileURL, dest)
                 
@@ -75,7 +75,44 @@ run_analysis <- function() {
         # Extract the data from only these columns
         filteredData <- masterData[colNames]
         
+        # Adjust the column names
+        names <- names(filteredData)
+                        
+        namesTidy <- character()
+        for (i in 2:length(names)) {
+                x <- names[i]
+                x <- gsub("-", "", x) 
+                x <- gsub("\\(", "", x) 
+                x <- gsub("\\)", "", x) 
+                
+                if (substring(x, 1, 1) == "t")
+                {
+                        x <- sub("t", "time", x)                         
+                }
+                
+                if (substring(x, 1, 1) == "f")
+                {
+                        x <- sub("f", "frequency", x)                         
+                }                                
+                                
+                x <- tolower(x)                  
+                x <- gsub("acc", "accelerometer", x) 
+                x <- gsub("gyro", "gyroscope", x) 
+                x <- gsub("mean", "meanvalue", x) 
+                x <- gsub("std", "standarddeviation", x) 
+                x <- gsub("freq", "frequency", x)
+                namesTidy[i] <- x
+        }
+                
+        namesTidy[1] <- names[1]
+        
+        # Insert the new column names
+        names(filteredData) <- namesTidy
+        
         # Average by activity and by subject
         result <- filteredData %>% group_by(activity, subject) %>% summarise_each(funs(mean))
+        
+        # Write to file
+        write.table(result, file = "result.txt", row.names = FALSE)        
                 
 }
